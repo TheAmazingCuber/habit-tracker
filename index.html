@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simple Habit Tracker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background: #f0f4f8;
+    }
+    h1, h2 {
+      color: #2c3e50;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      overflow-x: auto;
+      display: block;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      text-align: center;
+      padding: 6px;
+      min-width: 24px;
+    }
+    td.checked {
+      background-color: #2ecc71;
+      color: white;
+    }
+    td.month-label {
+      font-weight: bold;
+      background-color: #ecf0f1;
+      color: #2c3e50;
+    }
+  </style>
+</head>
+<body>
+  <h1>Simple Habit Tracker</h1>
+  <label for="habitInput">Habit Name:</label><br />
+  <input type="text" id="habitInput" placeholder="e.g. Exercise, Read, Meditate" />
+  <button onclick="startTracking()">Start</button>
+
+  <div id="tracker"></div>
+
+  <script>
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    function startTracking() {
+      const habit = document.getElementById("habitInput").value.trim();
+      if (!habit) return alert("Please enter a habit name.");
+      localStorage.setItem("habitName", habit);
+      generateTable(habit);
+    }
+
+    function generateTable(habit) {
+      const container = document.getElementById("tracker");
+      container.innerHTML = `<h2>${habit}</h2>`;
+
+      const today = new Date();
+      const year = today.getFullYear();
+      const savedChecks = JSON.parse(localStorage.getItem("habitChecks") || "{}");
+
+      const table = document.createElement("table");
+      const header = document.createElement("tr");
+      header.innerHTML = `<th class="month-label">Month/Day</th>`;
+      for (let i = 1; i <= 31; i++) {
+        const th = document.createElement("th");
+        th.textContent = i;
+        header.appendChild(th);
+      }
+      table.appendChild(header);
+
+      for (let month = 0; month < 12; month++) {
+        const tr = document.createElement("tr");
+        const days = new Date(year, month + 1, 0).getDate();
+
+        const monthLabel = document.createElement("td");
+        monthLabel.className = "month-label";
+        monthLabel.textContent = monthNames[month];
+        tr.appendChild(monthLabel);
+
+        for (let day = 1; day <= 31; day++) {
+          const td = document.createElement("td");
+          if (day <= days) {
+            const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            if (savedChecks[dateKey]) td.classList.add("checked");
+            td.onclick = () => {
+              td.classList.toggle("checked");
+              savedChecks[dateKey] = td.classList.contains("checked");
+              localStorage.setItem("habitChecks", JSON.stringify(savedChecks));
+            };
+          } else {
+            td.style.background = "#eee";
+          }
+          tr.appendChild(td);
+        }
+        table.appendChild(tr);
+      }
+      container.appendChild(table);
+    }
+
+    function isLeapYear(y) {
+      return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+    }
+
+    // Auto-load saved habit on page load
+    window.onload = () => {
+      const savedHabit = localStorage.getItem("habitName");
+      if (savedHabit) {
+        document.getElementById("habitInput").value = savedHabit;
+        generateTable(savedHabit);
+      }
+    };
+  </script>
+</body>
+</html>
